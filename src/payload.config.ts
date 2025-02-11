@@ -20,7 +20,110 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
-  collections: [Users, Media],
+  collections: [
+    Users,
+    Media,
+    {
+      slug: 'questions',
+      admin: {
+        useAsTitle: 'title',
+      },
+      fields: [
+        {
+          name: 'title',
+          type: 'text',
+          required: true,
+        },
+        {
+          type: 'join',
+          on: 'question',
+          collection: 'questions-categories',
+          name: 'category',
+        },
+      ],
+    },
+    {
+      slug: 'categories',
+      admin: {
+        useAsTitle: 'title',
+      },
+      fields: [
+        {
+          name: 'title',
+          type: 'text',
+          required: true,
+        },
+        {
+          type: 'join',
+          on: 'category',
+          collection: 'questions-categories',
+          name: 'question',
+        },
+      ],
+    },
+    {
+      slug: 'questions-categories',
+      admin: {
+        // group: false,
+        useAsTitle: 'title',
+      },
+      fields: [
+        {
+          type: 'row',
+          fields: [
+            {
+              name: 'category',
+              type: 'relationship',
+              relationTo: 'categories',
+            },
+            {
+              name: 'question',
+              type: 'relationship',
+              relationTo: 'questions',
+            },
+          ],
+        },
+        {
+          name: 'order',
+          type: 'number',
+          required: true,
+          defaultValue: 0,
+          index: true,
+        },
+        {
+          name: 'title',
+          type: 'text',
+          admin: {
+            hidden: true,
+          },
+          hooks: {
+            beforeChange: [
+              async ({ data, req }) => {
+                const questionID = data?.question
+                const categoryID = data?.category
+
+                if (questionID && categoryID) {
+                  const question = await req.payload.findByID({
+                    collection: 'questions',
+                    id: questionID,
+                    depth: 0,
+                  })
+
+                  const category = await req.payload.findByID({
+                    collection: 'categories',
+                    id: categoryID,
+                    depth: 0,
+                  })
+
+                  return `Category: ${category.title} - Question: ${question.title}`
+                }
+              },
+            ],
+          },
+        },
+      ],
+    },
+  ],
   editor: lexicalEditor(),
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
