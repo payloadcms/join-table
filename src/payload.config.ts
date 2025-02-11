@@ -64,7 +64,7 @@ export default buildConfig({
     {
       slug: 'questions-categories',
       admin: {
-        // group: false,
+        group: false,
         useAsTitle: 'title',
       },
       fields: [
